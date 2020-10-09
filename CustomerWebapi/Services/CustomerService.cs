@@ -18,11 +18,11 @@ namespace Services
         {
             throw new NotImplementedException();
         }
-        public Customer Update(int id)
+        public Customer Update(Customer newCustomer)
         {
             throw new NotImplementedException();
         }
-        public void Remove(int id)
+        public bool Remove(int id)
         {
             throw new NotImplementedException();
         }

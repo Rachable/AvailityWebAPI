@@ -35,13 +35,28 @@ namespace Services
             return _customers.Where(c => c.Id == id)
                             .FirstOrDefault();
         }
-        public Customer Update(int id)
+        public Customer Update(Customer newCustomer)
         {
-            throw new NotImplementedException();
+            var existingCustomer = GetById(newCustomer.Id);
+
+            if (existingCustomer != null)
+            {
+                existingCustomer.FirstName = newCustomer.FirstName;
+                existingCustomer.LastName = newCustomer.LastName;
+                existingCustomer.DateLastModified = new DateTime();
+            }
+
+            return existingCustomer;
         }
-        public void Remove(int id)
+        public bool Remove(int id)
         {
-            throw new NotImplementedException();
+            var existingCustomer = GetById(id);
+            
+            if (existingCustomer == null)
+                return false;
+
+            _customers.Remove(existingCustomer);
+            return true;
         }
     }
 }

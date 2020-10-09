@@ -14,15 +14,6 @@ namespace CustomerWebApi.Controllers
     [Route("[controller]")]
     public class CustomerController : ControllerBase
     {
-        Customer[] customers = new Customer[]
-        {
-            new Customer {Id = 1, FirstName = "Bob", LastName = "Burger", DateBecameCustomer = new DateTime(2019, 1, 20)},
-            new Customer {Id = 2, FirstName = "Tony", LastName = "Stark", DateBecameCustomer = new DateTime()},
-            new Customer {Id = 3, FirstName = "Bat", LastName = "Man", DateBecameCustomer = new DateTime(2020, 3, 15)},
-            new Customer {Id = 4, FirstName = "Chicken", LastName = "Little", DateBecameCustomer = new DateTime(2019, 5, 7)},
-            new Customer {Id = 5, FirstName = "Mary", LastName = "Poppins", DateBecameCustomer = new DateTime(2018, 1, 1)}
-        };
-
         private readonly ILogger<CustomerController> _logger;
         private readonly ICustomerService _service;
 
@@ -46,27 +37,46 @@ namespace CustomerWebApi.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-
-            Customer customer = _service.GetById(id);
+            var customer = _service.GetById(id);
 
             if (customer != null)
                 return Ok(customer);
-            else
-                return NotFound();
 
+            return NotFound();
         }
 
         [HttpPost]
         public IActionResult Post([FromBody] Customer customer)
         {
-            if(!ModelState.IsValid)
-            {
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            }
 
-            Customer newCustomer = _service.Add(customer);
+            var newCustomer = _service.Add(customer);
 
             return CreatedAtAction("Get", new {id = newCustomer.Id}, customer);
         }
+
+        [HttpPut]
+         public IActionResult Put([FromBody] Customer customer)
+         {
+             if (!ModelState.IsValid)
+                 return BadRequest(ModelState);
+
+             var newCustomer = _service.Update(customer);
+
+             if (newCustomer == null)
+                return NotFound();
+
+             return Ok(newCustomer);
+         }
+
+         [HttpDelete("{id}")]
+         public IActionResult Delete(int id)
+         {
+            if (_service.Remove(id))
+                return NoContent();
+
+            return NotFound();
+         }
     }
 }

@@ -17,14 +17,9 @@ namespace CustomerWebApi.Controllers
         private readonly ILogger<CustomerController> _logger;
         private readonly ICustomerService _service;
 
-        public CustomerController(ILogger<CustomerController> logger)
+        public CustomerController(ILogger<CustomerController> logger, ICustomerService service)
         {
             _logger = logger;
-            _service = new TestCustomerService();
-        }
-
-        public CustomerController(ICustomerService service)
-        {
             _service = service;
         }
 

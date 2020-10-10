@@ -26,7 +26,7 @@ namespace Services
         }
         public Customer Add(Customer newCustomer)
         {
-            newCustomer.DateBecameCustomer = new DateTime();
+            newCustomer.DateBecameCustomer = DateTime.Now;
             _customers.Add(newCustomer);
             return newCustomer;
         }
@@ -43,7 +43,7 @@ namespace Services
             {
                 existingCustomer.FirstName = newCustomer.FirstName;
                 existingCustomer.LastName = newCustomer.LastName;
-                existingCustomer.DateLastModified = new DateTime();
+                existingCustomer.DateLastModified = DateTime.Now;
             }
 
             return existingCustomer;

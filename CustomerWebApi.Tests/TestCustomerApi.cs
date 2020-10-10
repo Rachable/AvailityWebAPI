@@ -20,7 +20,7 @@ namespace CustomerWebApi.Tests
 
         public TestCustomerApi()
         {  
-            _controller = new CustomerController(new TestCustomerService());
+            _controller = new CustomerController(null, new TestCustomerService());
         }
 
         [Fact]

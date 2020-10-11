@@ -1,5 +1,4 @@
 using System;
-using Microsoft.AspNetCore.Hosting;
 using MySql.Data.MySqlClient;
 
 namespace Services

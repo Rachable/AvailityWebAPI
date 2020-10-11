@@ -1,39 +1,31 @@
-using System;
-using System.Net;
 using Xunit;
-using CustomerWebApi;
 using CustomerWebApi.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using Services;
-using System.Collections.Generic;
 using Models;
-using System.Security.Principal;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CustomerWebApi.Tests
 {
-    public class TestCustomerApi
+    public class CustomerWebApiTests
     {
 
         CustomerController _controller;
 
-        public TestCustomerApi()
-        {  
-            _controller = new CustomerController(null, new TestCustomerService());
+        public CustomerWebApiTests()
+        {
+            _controller = new CustomerController(new NullLogger<CustomerController>(), new MockCustomerService());
         }
 
         [Fact]
         public void GetAllCustomersReturnsOkResult()
         {
-
-            var okResult = _controller.Get();
+            var okResult = _controller.Get(new CustomerParameters());
             Assert.IsType<OkObjectResult>(okResult);
 
             var objectResult = okResult as ObjectResult;
-            var items = Assert.IsType<List<Customer>>(objectResult.Value);
+            var items = Assert.IsType<PagedList<Customer>>(objectResult.Value);
             Assert.Equal(5, items.Count);
-            
         }
 
         [Theory]
@@ -47,14 +39,14 @@ namespace CustomerWebApi.Tests
 
             var objectResult = okResult as ObjectResult;
             var testCustomer = Assert.IsType<Customer>(objectResult.Value);
-            Assert.Equal(testCustomer.FirstName, expectedFirstName);
-            Assert.Equal(testCustomer.LastName, expectedLastName);
+            Assert.Equal(expectedFirstName, testCustomer.FirstName);
+            Assert.Equal(expectedLastName, testCustomer.LastName);
         }
 
         [Theory]
         [InlineData(15)]
-        [InlineData(26)]
-        [InlineData(37)]
+        [InlineData(0)]
+        [InlineData(-1)]
         public void GetCustomerIDInvalidID(int id)
         {
             var okResult = _controller.Get(id);
@@ -62,14 +54,13 @@ namespace CustomerWebApi.Tests
         }
 
         [Theory]
-        [InlineData(6,"Wonder","Woman",6)]
-        [InlineData(7,"Green","Lantern",6)]
-        [InlineData(8,"Dare","Devil",6)]
-        public void AddCustomerSuccessful(int id, string firstName, string lastName, int expectedCount)
+        [InlineData("Wonder", "Woman", 6)]
+        [InlineData("Green", "Lantern", 6)]
+        [InlineData("Dare", "Devil", 6)]
+        public void AddCustomerSuccessful(string firstName, string lastName, int expectedCount)
         {
             var testCustomer = new Customer()
             {
-                Id = id,
                 FirstName = firstName,
                 LastName = lastName
             };
@@ -79,17 +70,20 @@ namespace CustomerWebApi.Tests
 
             var objectResult = okResult as ObjectResult;
             Assert.IsType<Customer>(objectResult.Value);
+            var customer = objectResult.Value as Customer;
+            Assert.Equal(firstName, customer.FirstName);
+            Assert.Equal(lastName, customer.LastName);
 
-            okResult = _controller.Get();
+            okResult = _controller.Get(new CustomerParameters());
             objectResult = okResult as ObjectResult;
-            var items = Assert.IsType<List<Customer>>(objectResult.Value);
+            var items = Assert.IsType<PagedList<Customer>>(objectResult.Value);
             Assert.Equal(expectedCount, items.Count);
         }
 
         [Theory]
-        [InlineData(1,"Bob","Burgers")]
-        [InlineData(2,"Tony","Bark")]
-        [InlineData(3,"Cat","Woman")]
+        [InlineData(1, "Bob", "Burgers")]
+        [InlineData(2, "Tony", "Bark")]
+        [InlineData(3, "Cat", "Woman")]
         public void UpdateValidCustomer(int id, string firstName, string lastName)
         {
             var testCustomer = new Customer()
@@ -100,23 +94,13 @@ namespace CustomerWebApi.Tests
             };
 
             var okResult = _controller.Put(testCustomer);
-            Assert.IsType<OkObjectResult>(okResult);
-
-
-            var objectResult = okResult as ObjectResult;
-            Assert.IsType<Customer>(objectResult.Value);
-
-            okResult = _controller.Get(id);
-            objectResult = okResult as ObjectResult;
-            var returnCustomer = Assert.IsType<Customer>(objectResult.Value);
-            Assert.Equal(returnCustomer.FirstName, firstName);
-            Assert.Equal(returnCustomer.LastName, lastName);
+            Assert.IsType<NoContentResult>(okResult);
         }
 
         [Theory]
-        [InlineData(17,"Bob","Burgers")]
-        [InlineData(43,"Tony","Bark")]
-        [InlineData(192,"Cat","Woman")]
+        [InlineData(17, "Bob", "Burgers")]
+        [InlineData(43, "Tony", "Bark")]
+        [InlineData(192, "Cat", "Woman")]
         public void UpdateInvalidCustomer(int id, string firstName, string lastName)
         {
             var testCustomer = new Customer()
@@ -128,38 +112,35 @@ namespace CustomerWebApi.Tests
 
             var okResult = _controller.Put(testCustomer);
             Assert.IsType<NotFoundResult>(okResult);
-
         }
 
         [Theory]
-        [InlineData(3,4)]
-        [InlineData(1,4)]
-        [InlineData(5,4)]
+        [InlineData(3, 4)]
+        [InlineData(1, 4)]
+        [InlineData(5, 4)]
         public void DeleteValidCustomer(int id, int expectedCount)
         {
-
             var okResult = _controller.Delete(id);
             Assert.IsType<NoContentResult>(okResult);
 
-            okResult = _controller.Get();
+            okResult = _controller.Get(new CustomerParameters());
             var objectResult = okResult as ObjectResult;
-            var items = Assert.IsType<List<Customer>>(objectResult.Value);
+            var items = Assert.IsType<PagedList<Customer>>(objectResult.Value);
             Assert.Equal(expectedCount, items.Count);
         }
 
         [Theory]
-        [InlineData(38,5)]
-        [InlineData(72,5)]
-        [InlineData(67,5)]
+        [InlineData(38, 5)]
+        [InlineData(72, 5)]
+        [InlineData(67, 5)]
         public void DeleteInvalidCustomer(int id, int expectedCount)
         {
-
             var okResult = _controller.Delete(id);
             Assert.IsType<NotFoundResult>(okResult);
 
-            okResult = _controller.Get();
+            okResult = _controller.Get(new CustomerParameters());
             var objectResult = okResult as ObjectResult;
-            var items = Assert.IsType<List<Customer>>(objectResult.Value);
+            var items = Assert.IsType<PagedList<Customer>>(objectResult.Value);
             Assert.Equal(expectedCount, items.Count);
         }
     }

@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Models;
 using Services;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace CustomerWebApi.Controllers
 {
@@ -24,54 +23,98 @@ namespace CustomerWebApi.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get([FromQuery] CustomerParameters customerParameters)
         {
-            return Ok(_service.GetAllCustomers());
+            try
+            {
+                var customers = _service.GetAllCustomers(customerParameters);
+
+                var metadata = new
+                {
+                    customers.TotalCount,
+                    customers.PageSize,
+                    customers.CurrentPage,
+                    customers.TotalPages,
+                    customers.HasNext,
+                    customers.HasPrevious
+                };
+
+                if (Response != null)
+                    Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+                return customers.Count() > 0 ? (IActionResult)Ok(customers) : (IActionResult)NotFound();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception on Get All");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            var customer = _service.GetById(id);
-
-            if (customer != null)
-                return Ok(customer);
-
-            return NotFound();
+            try
+            {
+                var customer = _service.GetById(id);
+                return customer != null ? (IActionResult)Ok(customer) : (IActionResult)NotFound();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception on Get By Id");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpPost]
         public IActionResult Post([FromBody] Customer customer)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
-            var newCustomer = _service.Add(customer);
+                var newId = _service.Add(customer);
+                var newCustomer = _service.GetById(newId);
 
-            return CreatedAtAction("Get", new {id = newCustomer.Id}, customer);
+                return CreatedAtAction("Get", new { id = newCustomer.Id }, newCustomer);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception on Post");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpPut]
-         public IActionResult Put([FromBody] Customer customer)
-         {
-             if (!ModelState.IsValid)
-                 return BadRequest(ModelState);
+        public IActionResult Put([FromBody] Customer customer)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
-             var newCustomer = _service.Update(customer);
+                return _service.Update(customer) ? (IActionResult)NoContent() : (IActionResult)NotFound();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception on Put");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
 
-             if (newCustomer == null)
-                return NotFound();
-
-             return Ok(newCustomer);
-         }
-
-         [HttpDelete("{id}")]
-         public IActionResult Delete(int id)
-         {
-            if (_service.Remove(id))
-                return NoContent();
-
-            return NotFound();
-         }
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            try
+            {
+                return _service.Remove(id) ? (IActionResult)NoContent() : (IActionResult)NotFound();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception on Delete");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
     }
 }

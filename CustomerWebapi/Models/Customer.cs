@@ -1,18 +1,21 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Models
 {
     public class Customer
     {
-        public int Id {get; set; }
+        public int Id { get; set; }
 
-        public String FirstName {get; set; }
+        [Required(ErrorMessage = "First name is required")]
+        public String FirstName { get; set; }
 
-        public String LastName {get; set; }
+        [Required(ErrorMessage = "Last name is required")]
+        public String LastName { get; set; }
 
-        public DateTime DateBecameCustomer {get; set; }
+        public DateTime DateBecameCustomer { get; set; }
 
-        public DateTime DateLastModified {get; set;}
+        public DateTime? DateLastModified { get; set; }
 
     }
 }
